@@ -20,7 +20,7 @@ def get_version():
 
 
 setup(
-    name='lazr.fixtures',
+    name='rabbitfixture',
     version="0",#,get_version(),
     packages=find_packages('.'),
     package_dir={'': '.'},
