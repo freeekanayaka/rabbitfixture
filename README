@@ -4,11 +4,10 @@ A RabbitMQ fixture.
 Building
 --------
 
- $ python bootstrap.py
- $ bin/buildout
+ $ make build
 
 
 Testing
 -------
 
- $ bin/test -m rabbitfixture
+ $ make check
