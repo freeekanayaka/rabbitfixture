@@ -10,7 +10,7 @@ from textwrap import dedent
 
 from amqplib import client_0_8 as amqp
 from fixtures import EnvironmentVariableFixture
-from lazr.fixtures.rabbitmq.server import RabbitServer
+from rabbitfixture.server import RabbitServer
 from testtools import TestCase
 
 

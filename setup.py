@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Distutils installer for lazr.fixtures."""
+"""Distutils installer for rabbitfixture."""
 
 from setuptools import setup, find_packages
 
