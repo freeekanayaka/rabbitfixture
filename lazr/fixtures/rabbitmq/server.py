@@ -111,6 +111,9 @@ class RabbitServerResources(Fixture):
         self.mnesiadir = self.useFixture(TempDir()).path
         self.logfile = os.path.join(self.homedir, 'server.log')
         self.nodename = os.path.basename(self.useFixture(TempDir()).path)
+        # XXX: GavinPanella 2011-06-28 bug=???: There is a (launchpad
+        # specific) config fixture. This should be a separate class in the
+        # Launchpad tree.
         self.service_config = dedent("""\
             [rabbitmq]
             host: localhost:%d

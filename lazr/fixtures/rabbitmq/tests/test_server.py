@@ -36,8 +36,9 @@ class TestRabbitFixture(TestCase):
         # Which shouldn't blow up on iteration.
         list(log.iter_text())
 
-        # There is a (launchpad specific) config fixture. (This could be a
-        # separate class if we make the fixture external in the future).
+        # XXX: GavinPanella 2011-06-28 bug=???: There is a (launchpad
+        # specific) config fixture. This should be a separate class in the
+        # Launchpad tree.
         expected = dedent("""\
             [rabbitmq]
             host: localhost:%d
