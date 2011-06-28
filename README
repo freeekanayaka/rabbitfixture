@@ -1,0 +1,21 @@
+Generic long poll server used by Launchpad and Landscape.
+
+
+Building
+--------
+
+lazr.amqp needs a recent RabbitMQ with support for rejection. Maverick's
+1.8.0 is not sufficient, but 2.1.1 works fine, so >= Natty is OK.
+
+ $ python bootstrap.py
+ $ bin/buildout
+
+
+Testing
+-------
+
+The test suite needs some users and vhosts on the system RabbitMQ
+instance.
+
+ $ ./rabbitmq-test-setup
+ $ bin/test
