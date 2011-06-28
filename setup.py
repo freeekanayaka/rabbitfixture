@@ -28,7 +28,7 @@ setup(
     zip_safe=False,
     description='Magic.',
     install_requires=[
-        'txamqp',
-        'testtools',
-        'python-fixtures',
+        'amqplib >= 0.6.1',
+        'fixtures >= 0.3.6',
+        'testtools >= 0.9.11',
         ])
