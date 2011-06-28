@@ -1,7 +1,9 @@
-.installed.cfg
-bin
-develop-eggs
-eggs
 *.egg-info
-parts
-download-cache/dist
+./.installed.cfg
+./bin
+./build
+./develop-eggs
+./dist
+./download-cache/dist
+./eggs
+./parts
