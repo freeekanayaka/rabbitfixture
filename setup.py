@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Distutils installer for lazr.amqp."""
+"""Distutils installer for lazr.fixtures."""
 
 from setuptools import setup, find_packages
 
@@ -18,25 +18,17 @@ def get_revno():
 def get_version():
     return "0.0.1-r%s" % get_revno()
 
+
 setup(
-    name='lazr.amqp',
+    name='lazr.fixtures',
     version="0",#,get_version(),
     packages=find_packages('.'),
     package_dir={'': '.'},
     include_package_data=True,
     zip_safe=False,
     description='Magic.',
-    entry_points=dict(
-        console_scripts=[
-            'twistd = twisted.scripts.twistd:run',
-        ]
-    ),
     install_requires=[
-        'transaction',
-        'twisted',
         'txamqp',
-        'zope.component',
-        'zope.configuration',
-        'zope.interface',
-        'zope.schema',
+        'testtools',
+        'python-fixtures',
         ])
