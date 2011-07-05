@@ -7,6 +7,7 @@ __metaclass__ = type
 
 __all__ = [
     "RabbitServer",
+    "RabbitServerResources",
     ]
 
 import os
@@ -69,14 +70,30 @@ class RabbitServerResources(Fixture):
     :ivar nodename: The name of the node.
     """
 
+    def __init__(self, hostname=None, port=None, homedir=None,
+                 mnesiadir=None, logfile=None, nodename=None):
+        super(RabbitServerResources, self).__init__()
+        self.hostname = hostname
+        self.port = port
+        self.homedir = homedir
+        self.mnesiadir = mnesiadir
+        self.logfile = logfile
+        self.nodename = nodename
+
     def setUp(self):
         super(RabbitServerResources, self).setUp()
-        self.hostname = 'localhost'
-        self.port = allocate_ports()[0]
-        self.homedir = self.useFixture(TempDir()).path
-        self.mnesiadir = self.useFixture(TempDir()).path
-        self.logfile = os.path.join(self.homedir, 'server.log')
-        self.nodename = os.path.basename(self.useFixture(TempDir()).path)
+        if self.hostname is None:
+            self.hostname = 'localhost'
+        if self.port is None:
+            [self.port] = allocate_ports(1)
+        if self.homedir is None:
+            self.homedir = self.useFixture(TempDir()).path
+        if self.mnesiadir is None:
+            self.mnesiadir = self.useFixture(TempDir()).path
+        if self.logfile is None:
+            self.logfile = os.path.join(self.homedir, 'server.log')
+        if self.nodename is None:
+            self.nodename = os.path.basename(self.useFixture(TempDir()).path)
 
     @property
     def fq_nodename(self):
@@ -321,9 +338,14 @@ class RabbitServer(Fixture):
     :ivar runner: The `RabbitServerRunner` that bootstraps the server.
     """
 
+    def __init__(self, config=None):
+        super(RabbitServer, self).__init__()
+        self.config = config
+
     def setUp(self):
         super(RabbitServer, self).setUp()
-        self.config = RabbitServerResources()
+        if self.config is None:
+            self.config = RabbitServerResources()
         self.useFixture(self.config)
         self.runner = RabbitServerRunner(self.config)
         self.useFixture(self.runner)
