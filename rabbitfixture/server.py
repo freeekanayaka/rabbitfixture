@@ -7,6 +7,7 @@ __metaclass__ = type
 
 __all__ = [
     "RabbitServer",
+    "RabbitServerResources",
     ]
 
 import os
@@ -32,39 +33,6 @@ from testtools.content_type import UTF8_TEXT
 # 'rabbitmq', neither of which are needed to operate correctly. So we run the
 # actual erlang binaries.
 RABBITBIN = "/usr/lib/rabbitmq/bin"
-
-
-# def setup_exchange(conf, port):
-#     """ create an exchange """
-#     # Not ported yet.
-#     conn = _get_connection(conf, port)
-#     # see if we already have the exchange
-#     must_create = False
-#     chan = conn.channel()
-#     try:
-#         chan.exchange_declare(exchange=conf.exchange_name + BRANCH_NICK,
-#                               type=conf.exchange_type, passive=True)
-#     except (amqp.AMQPConnectionException, amqp.AMQPChannelException), e:
-#         if e.amqp_reply_code == 404:
-#             must_create = True
-#             # amqplib kills the channel on error.... we dispose of it too
-#             chan.close()
-#             chan = conn.channel()
-#         else:
-#             raise
-#     # now create the exchange if needed
-#     if must_create:
-#         chan.exchange_declare(exchange=conf.exchange_name + BRANCH_NICK,
-#                               type=conf.exchange_type,
-#                               durable=True, auto_delete=False,)
-#         print "Created new exchange %s (%s)" % (
-#             conf.exchange_name + BRANCH_NICK, conf.exchange_type)
-#     else:
-#         print "Exchange %s (%s) is already declared" % (
-#             conf.exchange_name + BRANCH_NICK, conf.exchange_type)
-#     chan.close()
-#     conn.close()
-#     return True
 
 
 def preexec_fn():
@@ -102,14 +70,30 @@ class RabbitServerResources(Fixture):
     :ivar nodename: The name of the node.
     """
 
+    def __init__(self, hostname=None, port=None, homedir=None,
+                 mnesiadir=None, logfile=None, nodename=None):
+        super(RabbitServerResources, self).__init__()
+        self.hostname = hostname
+        self.port = port
+        self.homedir = homedir
+        self.mnesiadir = mnesiadir
+        self.logfile = logfile
+        self.nodename = nodename
+
     def setUp(self):
         super(RabbitServerResources, self).setUp()
-        self.hostname = 'localhost'
-        self.port = allocate_ports()[0]
-        self.homedir = self.useFixture(TempDir()).path
-        self.mnesiadir = self.useFixture(TempDir()).path
-        self.logfile = os.path.join(self.homedir, 'server.log')
-        self.nodename = os.path.basename(self.useFixture(TempDir()).path)
+        if self.hostname is None:
+            self.hostname = 'localhost'
+        if self.port is None:
+            [self.port] = allocate_ports(1)
+        if self.homedir is None:
+            self.homedir = self.useFixture(TempDir()).path
+        if self.mnesiadir is None:
+            self.mnesiadir = self.useFixture(TempDir()).path
+        if self.logfile is None:
+            self.logfile = os.path.join(self.homedir, 'server.log')
+        if self.nodename is None:
+            self.nodename = os.path.basename(self.useFixture(TempDir()).path)
 
     @property
     def fq_nodename(self):
@@ -354,9 +338,14 @@ class RabbitServer(Fixture):
     :ivar runner: The `RabbitServerRunner` that bootstraps the server.
     """
 
+    def __init__(self, config=None):
+        super(RabbitServer, self).__init__()
+        self.config = config
+
     def setUp(self):
         super(RabbitServer, self).setUp()
-        self.config = RabbitServerResources()
+        if self.config is None:
+            self.config = RabbitServerResources()
         self.useFixture(self.config)
         self.runner = RabbitServerRunner(self.config)
         self.useFixture(self.runner)
