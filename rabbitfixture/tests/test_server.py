@@ -6,7 +6,6 @@
 __metaclass__ = type
 
 import socket
-from textwrap import dedent
 
 from amqplib import client_0_8 as amqp
 from fixtures import EnvironmentVariableFixture
@@ -35,18 +34,6 @@ class TestRabbitFixture(TestCase):
         log = fixture.runner.getDetails()["server.log"]
         # Which shouldn't blow up on iteration.
         list(log.iter_text())
-
-        # XXX: GavinPanella 2011-06-28 bug=???: There is a (launchpad
-        # specific) config fixture. This should be a separate class in the
-        # Launchpad tree.
-        expected = dedent("""\
-            [rabbitmq]
-            host: localhost:%d
-            userid: guest
-            password: guest
-            virtual_host: /
-            """ % fixture.config.port)
-        self.assertEqual(expected, fixture.config.service_config)
 
         fixture.cleanUp()
 
