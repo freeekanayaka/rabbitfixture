@@ -1,5 +1,6 @@
 *.egg-info
 ./.installed.cfg
+./TAGS
 ./bin
 ./build
 ./develop-eggs
@@ -7,3 +8,4 @@
 ./download-cache/dist
 ./eggs
 ./parts
+./tags
