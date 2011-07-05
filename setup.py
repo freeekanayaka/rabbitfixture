@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='rabbitfixture',
-    version="0.2.1",
+    version="0.3",
     packages=find_packages('.'),
     package_dir={'': '.'},
     include_package_data=True,
