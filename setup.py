@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='rabbitfixture',
-    version="0.2",
+    version="0.2.1",
     packages=find_packages('.'),
     package_dir={'': '.'},
     include_package_data=True,
@@ -15,5 +15,6 @@ setup(
     install_requires=[
         'amqplib >= 0.6.1',
         'fixtures >= 0.3.6',
+        'setuptools',
         'testtools >= 0.9.11',
         ])
