@@ -19,12 +19,14 @@ from testtools import TestCase
 
 class TestRabbitFixture(TestCase):
 
-    def test_start_check_shutdown(self):
+    def setUp(self):
+        super(TestRabbitFixture, self).setUp()
         # Rabbit needs to fully isolate itself: an existing per user
-        # .erlange.cookie has to be ignored, and ditto bogus HOME if other
+        # .erlang.cookie has to be ignored, and ditto bogus HOME if other
         # tests fail to cleanup.
         self.useFixture(EnvironmentVariableFixture('HOME', '/nonsense/value'))
 
+    def test_start_check_shutdown(self):
         fixture = self.useFixture(RabbitServer())
 
         # We can connect.
@@ -43,6 +45,14 @@ class TestRabbitFixture(TestCase):
 
         # The daemon should be closed now.
         self.assertRaises(socket.error, amqp.Connection, **connect_arguments)
+
+    def test_config(self):
+        # The configuration can be passed in.
+        config = RabbitServerResources()
+        fixture = self.useFixture(RabbitServer(config))
+        self.assertIs(config, fixture.config)
+        self.assertIs(config, fixture.runner.config)
+        self.assertIs(config, fixture.runner.environment.config)
 
 
 class TestRabbitServerResources(TestCase):
