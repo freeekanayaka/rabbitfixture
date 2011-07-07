@@ -115,7 +115,6 @@ class RabbitServerEnvironment(Fixture):
     - ``RABBITMQ_NODE_PORT``
     - ``RABBITMQ_NODENAME``
     - ``RABBITMQ_PLUGINS_DIR``
-    - ``RABBITMQ_PLUGINS_EXPAND_DIR``
 
     """
 
@@ -140,8 +139,6 @@ class RabbitServerEnvironment(Fixture):
             "RABBITMQ_NODENAME", self.config.fq_nodename))
         self.useFixture(EnvironmentVariableFixture(
             "RABBITMQ_PLUGINS_DIR", self.config.pluginsdir))
-        self.useFixture(EnvironmentVariableFixture(
-            "RABBITMQ_PLUGINS_EXPAND_DIR", self.config.pluginsdir))
         self._errors = []
         self.addDetail('rabbit-errors',
             Content(UTF8_TEXT, self._get_errors))
