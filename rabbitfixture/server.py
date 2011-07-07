@@ -73,15 +73,18 @@ class RabbitServerResources(Fixture):
     def __init__(self, hostname=None, port=None, homedir=None,
                  mnesiadir=None, logfile=None, nodename=None):
         super(RabbitServerResources, self).__init__()
-        self.hostname = hostname
-        self.port = port
-        self.homedir = homedir
-        self.mnesiadir = mnesiadir
-        self.logfile = logfile
-        self.nodename = nodename
+        self._defaults = dict(
+            hostname=hostname,
+            port=port,
+            homedir=homedir,
+            mnesiadir=mnesiadir,
+            logfile=logfile,
+            nodename=nodename,
+            )
 
     def setUp(self):
         super(RabbitServerResources, self).setUp()
+        self.__dict__.update(self._defaults)
         if self.hostname is None:
             self.hostname = 'localhost'
         if self.port is None:
@@ -94,6 +97,12 @@ class RabbitServerResources(Fixture):
             self.logfile = os.path.join(self.homedir, 'server.log')
         if self.nodename is None:
             self.nodename = os.path.basename(self.useFixture(TempDir()).path)
+
+    def tearDown(self):
+        super(RabbitServerResources, self).tearDown()
+        # Restore defaults, setting dynamic values back to None for
+        # reallocation in setUp.
+        self.__dict__.update(self._defaults)
 
     @property
     def fq_nodename(self):

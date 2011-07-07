@@ -5,6 +5,7 @@
 
 __metaclass__ = type
 
+import os.path
 import socket
 from socket import gethostname
 
@@ -71,9 +72,20 @@ class TestRabbitServerResources(TestCase):
             hostname="hostname", port=1234,
             homedir="homedir", mnesiadir="mnesiadir",
             logfile="logfile", nodename="nodename")
-        with RabbitServerResources(**args) as resources:
-            for key, value in args.iteritems():
-                self.assertEqual(value, getattr(resources, key))
+        resources = RabbitServerResources(**args)
+        for i in range(2):
+            with resources:
+                for key, value in args.iteritems():
+                    self.assertEqual(value, getattr(resources, key))
+
+    def test_defaults_reallocated_after_teardown(self):
+        seen_homedirs = set()
+        resources = RabbitServerResources()
+        for i in range(2):
+            with resources:
+                self.assertTrue(os.path.exists(resources.homedir))
+                self.assertNotIn(resources.homedir, seen_homedirs)
+                seen_homedirs.add(resources.homedir)
 
     def test_fq_nodename(self):
         with RabbitServerResources(nodename="nibbles") as resources:
