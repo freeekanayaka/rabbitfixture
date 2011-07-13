@@ -97,6 +97,7 @@ class RabbitServerResources(Fixture):
             self.logfile = os.path.join(self.homedir, 'server.log')
         if self.nodename is None:
             self.nodename = os.path.basename(self.useFixture(TempDir()).path)
+        self.pluginsdir = self.useFixture(TempDir()).path
 
     def tearDown(self):
         super(RabbitServerResources, self).tearDown()
@@ -122,6 +123,7 @@ class RabbitServerEnvironment(Fixture):
     - ``RABBITMQ_LOG_BASE``
     - ``RABBITMQ_NODE_PORT``
     - ``RABBITMQ_NODENAME``
+    - ``RABBITMQ_PLUGINS_DIR``
 
     """
 
@@ -143,7 +145,9 @@ class RabbitServerEnvironment(Fixture):
         self.useFixture(EnvironmentVariableFixture(
             "RABBITMQ_NODE_PORT", str(self.config.port)))
         self.useFixture(EnvironmentVariableFixture(
-            "RABBITMQ_NODENAME", self.config.nodename))
+            "RABBITMQ_NODENAME", self.config.fq_nodename))
+        self.useFixture(EnvironmentVariableFixture(
+            "RABBITMQ_PLUGINS_DIR", self.config.pluginsdir))
         self._errors = []
         self.addDetail('rabbit-errors',
             Content(UTF8_TEXT, self._get_errors))
