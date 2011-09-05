@@ -186,20 +186,17 @@ class RabbitServerEnvironment(Fixture):
         if not outdata:
             return False
         # try to parse the output to find if this nodename is running
+        # new rabbitmq-servers don't have a running_nodes section, so we can't
+        # just look for that. Check that the node's status block reports
+        # rabbit.
         regex = re.compile(r"""
-            \{running_nodes,            # search for running_node section
-              \[                        # begin list of nodes
-                '?                      # individual node may be quoted
-                (?P<nodename>           # begin capture group
-                  [^@]+                 # a node is name@hostname: name
-                  @                     # @
-                  [^@']+                # hostname
-                )                       # end capturing group
-                '?                      # individual node may be quoted
-                ,?                      # may be multiple nodes, comma-sep
-              \]                        # end list
-            \}                          # end section
-        """, re.VERBOSE)
+            Status\ of\ node\ '?
+              (?P<nodename>        # begin capture group
+                [^@]+@[^@']+       # a node is name@hostname
+              )'?\ \.\.\.\n        # end capture group
+            \[(\{pid,\d+\},\n\ )?  # old versions don't show the pid.
+            \{running_applications,\[\{rabbit,"RabbitMQ".*
+        """, re.VERBOSE | re.MULTILINE)
         match = regex.search(outdata)
         if not match:
             self._errors.append(outdata)
