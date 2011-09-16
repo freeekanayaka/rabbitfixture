@@ -16,5 +16,5 @@ setup(
         'amqplib >= 0.6.1',
         'fixtures >= 0.3.6',
         'setuptools',
-        'testtools >= 0.9.11',
+        'testtools >= 0.9.12',
         ])
