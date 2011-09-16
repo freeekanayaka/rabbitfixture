@@ -16,6 +16,7 @@ from rabbitfixture.server import (
     RabbitServerResources,
     )
 from testtools import TestCase
+from testtools.testcase import gather_details
 
 
 class TestRabbitFixture(TestCase):
@@ -28,21 +29,26 @@ class TestRabbitFixture(TestCase):
         self.useFixture(EnvironmentVariableFixture('HOME', '/nonsense/value'))
 
     def test_start_check_shutdown(self):
-        fixture = self.useFixture(RabbitServer())
-
-        # We can connect.
-        connect_arguments = {
-            "host": 'localhost:%s' % fixture.config.port,
-            "userid": "guest", "password": "guest",
-            "virtual_host": "/", "insist": False,
-            }
-        amqp.Connection(**connect_arguments).close()
-        # And get a log file.
-        log = fixture.runner.getDetails()["server.log"]
-        # Which shouldn't blow up on iteration.
-        list(log.iter_text())
-
-        fixture.cleanUp()
+        # The fixture correctly starts and stops RabbitMQ.
+        with RabbitServer() as fixture:
+            try:
+                # We can connect.
+                connect_arguments = {
+                    "host": 'localhost:%s' % fixture.config.port,
+                    "userid": "guest", "password": "guest",
+                    "virtual_host": "/", "insist": False,
+                    }
+                amqp.Connection(**connect_arguments).close()
+                # And get a log file.
+                log = fixture.runner.getDetails()["server.log"]
+                # Which shouldn't blow up on iteration.
+                list(log.iter_text())
+            except Exception:
+                # self.useFixture() is not being used because we want to
+                # handle the fixture's lifecycle, so we must also be
+                # responsible for propagating fixture details.
+                gather_details(fixture.getDetails(), self.getDetails())
+                raise
 
         # The daemon should be closed now.
         self.assertRaises(socket.error, amqp.Connection, **connect_arguments)
