@@ -8,10 +8,12 @@ __metaclass__ = type
 import os.path
 import socket
 from socket import gethostname
+from textwrap import dedent
 
 from amqplib import client_0_8 as amqp
 from fixtures import EnvironmentVariableFixture
 from rabbitfixture.server import (
+    get_nodename_from_status,
     RabbitServer,
     RabbitServerResources,
     )
@@ -98,3 +100,29 @@ class TestRabbitServerResources(TestCase):
             self.assertEqual(
                 "nibbles@%s" % gethostname(),
                 resources.fq_nodename)
+
+
+class TestFunctions(TestCase):
+
+    def test_get_nodename_from_status(self):
+        example_status = dedent("""\
+        Status of node tmpTAIyVi@obidos ...
+        [{running_applications,
+             [{rabbit_management,"RabbitMQ Management Console","0.0.0"},
+              {webmachine,"webmachine","1.8.1"},
+              {crypto,"CRYPTO version 1","1.6.3"},
+              {amqp_client,"RabbitMQ AMQP Client","2.3.1"},
+              {rabbit_management_agent,"RabbitMQ Management Agent","0.0.0"},
+              {rabbit,"RabbitMQ","2.3.1"},
+              {mnesia,"MNESIA  CXC 138 12","4.4.12"},
+              {os_mon,"CPO  CXC 138 46","2.2.4"},
+              {sasl,"SASL  CXC 138 11","2.1.8"},
+              {rabbit_mochiweb,"RabbitMQ Mochiweb Embedding","0.0.0"},
+              {stdlib,"ERTS  CXC 138 10","1.16.4"},
+              {kernel,"ERTS  CXC 138 10","2.13.4"}]},
+         {nodes,[{disc,[tmpTAIyVi@obidos]}]},
+         {running_nodes,[tmpTAIyVi@obidos]}]
+        """)
+        self.assertEqual(
+            "tmpTAIyVi@obidos",
+            get_nodename_from_status(example_status))

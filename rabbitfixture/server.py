@@ -58,6 +58,25 @@ def allocate_ports(n=1):
             s.close()
 
 
+# Pattern to parse rabbitctl status output to find the nodename of a running
+# node. New rabbitmq-servers don't have a running_nodes section, so we can't
+# just look for that. Check that the node's status block reports rabbit.
+status_regex = re.compile(r"""
+    Status\ of\ node\ '?
+      (?P<nodename>        # begin capture group
+        [^@]+@[^@']+       # a node is name@hostname
+      )'?\ \.\.\.\n        # end capture group
+    \[(\{pid,\d+\},\n\ )?  # old versions don't show the pid.
+    \{running_applications,.*
+        \{rabbit,"RabbitMQ"
+    """, re.VERBOSE | re.DOTALL)
+
+
+def get_nodename_from_status(status_text):
+    match = status_regex.search(status_text)
+    return None if match is None else match.group("nodename")
+
+
 class RabbitServerResources(Fixture):
     """Allocate the resources a RabbitMQ server needs.
 
@@ -185,24 +204,12 @@ class RabbitServerEnvironment(Fixture):
             self._errors.append(errdata)
         if not outdata:
             return False
-        # try to parse the output to find if this nodename is running
-        # new rabbitmq-servers don't have a running_nodes section, so we can't
-        # just look for that. Check that the node's status block reports
-        # rabbit.
-        regex = re.compile(r"""
-            Status\ of\ node\ '?
-              (?P<nodename>        # begin capture group
-                [^@]+@[^@']+       # a node is name@hostname
-              )'?\ \.\.\.\n        # end capture group
-            \[(\{pid,\d+\},\n\ )?  # old versions don't show the pid.
-            \{running_applications,\[\{rabbit,"RabbitMQ".*
-        """, re.VERBOSE | re.MULTILINE)
-        match = regex.search(outdata)
-        if not match:
+        found_node = get_nodename_from_status(outdata)
+        if found_node is None:
             self._errors.append(outdata)
             return False
-        found_node = match.group('nodename')
-        return found_node == nodename
+        else:
+            return found_node == nodename
 
     def get_connection(self):
         """Get an AMQP connection to the RabbitMQ server.
