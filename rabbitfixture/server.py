@@ -283,15 +283,17 @@ class RabbitServerRunner(Fixture):
                 "RabbitMQ OTP already running even though it "
                 "hasn't been started it yet!")
         self._spawn()
-        # Wait for the server to come up...
+        # Wait for the server to come up: stop when the process is dead, or
+        # the timeout expires, or the server responds.
         timeout = time.time() + 15
-        while time.time() < timeout and self.check_running():
+        while time.time() < timeout and self.is_running():
             if self.environment.is_node_running():
                 break
             time.sleep(0.3)
         else:
             raise Exception(
-                "Timeout waiting for RabbitMQ server to start.")
+                "Timeout waiting for RabbitMQ server to start: log in %r." %
+                (self.config.logfile,))
         # The Erlang OTP is up, but RabbitMQ may not be usable. We need to
         # cleanup up the process from here on in even if the full service
         # fails to get together.
@@ -308,7 +310,8 @@ class RabbitServerRunner(Fixture):
                 break
         else:
             raise Exception(
-                "Timeout waiting for RabbitMQ to node to come up.")
+                "Timeout waiting for RabbitMQ to node to come up: log in %r." % 
+                (self.config.logfile,))
 
     def _request_stop(self):
         outstr, errstr = self.environment.rabbitctl("stop", strip=True)
