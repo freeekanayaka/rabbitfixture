@@ -118,12 +118,6 @@ class RabbitServerResources(Fixture):
             self.nodename = os.path.basename(self.useFixture(TempDir()).path)
         self.pluginsdir = self.useFixture(TempDir()).path
 
-    def tearDown(self):
-        super(RabbitServerResources, self).tearDown()
-        # Restore defaults, setting dynamic values back to None for
-        # reallocation in setUp.
-        self.__dict__.update(self._defaults)
-
     @property
     def fq_nodename(self):
         """The node of the RabbitMQ that is being exported."""
