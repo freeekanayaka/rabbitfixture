@@ -304,7 +304,7 @@ class RabbitServerRunner(Fixture):
                 break
         else:
             raise Exception(
-                "Timeout waiting for RabbitMQ to node to come up: log in %r." % 
+                "Timeout waiting for RabbitMQ node to come up: log in %r." %
                 (self.config.logfile,))
 
     def _request_stop(self):
