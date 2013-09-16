@@ -104,7 +104,7 @@ class TestRabbitServerResources(TestCase):
 
 class TestRabbitServerEnvironment(TestCase):
 
-    def test_defaults(self):
+    def test_setup(self):
         config = self.useFixture(RabbitServerResources(
             hostname="localhost", port=1234, homedir="rabbit/homedir",
             mnesiadir="rabbit/mnesiadir", logfile="rabbit/logfile",
