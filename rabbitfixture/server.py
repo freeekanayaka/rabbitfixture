@@ -171,8 +171,8 @@ class RabbitServerEnvironment(Fixture):
         self.useFixture(EnvironmentVariableFixture(
             "RABBITMQ_PLUGINS_DIR", self.config.pluginsdir))
         self._errors = []
-        self.addDetail('rabbit-errors',
-            Content(UTF8_TEXT, self._get_errors))
+        self.addDetail('rabbit-errors', Content(
+            UTF8_TEXT, self._get_errors))
 
     def _get_errors(self):
         """Yield all errors as UTF-8 encoded text."""
