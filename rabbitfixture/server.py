@@ -41,21 +41,29 @@ def preexec_fn():
     signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
 
-def allocate_ports(n=1):
-    """Allocate `n` unused ports.
+def get_port(socket):
+    """Return the port to which a socket is bound."""
+    addr, port = socket.getsockname()
+    return port
+
+
+def allocate_ports(*addrs):
+    """Allocate `len(addrs)` unused ports.
+
+    A port is allocated for each element in `addrs`.
 
     There is a small race condition here (between the time we allocate the
     port, and the time it actually gets used), but for the purposes for which
     this function gets used it isn't a problem in practice.
     """
-    sockets = map(lambda _: socket.socket(), xrange(n))
+    sockets = [socket.socket() for addr in addrs]
     try:
-        for s in sockets:
-            s.bind(('localhost', 0))
-        return map(lambda s: s.getsockname()[1], sockets)
+        for addr, sock in zip(addrs, sockets):
+            sock.bind((addr, 0))
+        return [get_port(sock) for sock in sockets]
     finally:
-        for s in sockets:
-            s.close()
+        for sock in sockets:
+            sock.close()
 
 
 # Pattern to parse rabbitctl status output to find the nodename of a running
@@ -107,7 +115,7 @@ class RabbitServerResources(Fixture):
         if self.hostname is None:
             self.hostname = 'localhost'
         if self.port is None:
-            [self.port] = allocate_ports(1)
+            [self.port] = allocate_ports(self.hostname)
         if self.homedir is None:
             self.homedir = self.useFixture(TempDir()).path
         if self.mnesiadir is None:
@@ -121,10 +129,7 @@ class RabbitServerResources(Fixture):
     @property
     def fq_nodename(self):
         """The node of the RabbitMQ that is being exported."""
-        # Note that socket.gethostname is recommended by the rabbitctl manpage
-        # even though we're always on localhost, its what the erlang cluster
-        # code wants.
-        return "%s@%s" % (self.nodename, socket.gethostname())
+        return "%s@%s" % (self.nodename, self.hostname)
 
 
 class RabbitServerEnvironment(Fixture):
@@ -134,6 +139,7 @@ class RabbitServerEnvironment(Fixture):
 
     - ``RABBITMQ_MNESIA_BASE``
     - ``RABBITMQ_LOG_BASE``
+    - ``RABBITMQ_NODE_IP_ADDRESS``
     - ``RABBITMQ_NODE_PORT``
     - ``RABBITMQ_NODENAME``
     - ``RABBITMQ_PLUGINS_DIR``
@@ -156,14 +162,17 @@ class RabbitServerEnvironment(Fixture):
         self.useFixture(EnvironmentVariableFixture(
             "RABBITMQ_LOG_BASE", self.config.homedir))
         self.useFixture(EnvironmentVariableFixture(
+            "RABBITMQ_NODE_IP_ADDRESS",
+            socket.gethostbyname(self.config.hostname)))
+        self.useFixture(EnvironmentVariableFixture(
             "RABBITMQ_NODE_PORT", str(self.config.port)))
         self.useFixture(EnvironmentVariableFixture(
             "RABBITMQ_NODENAME", self.config.fq_nodename))
         self.useFixture(EnvironmentVariableFixture(
             "RABBITMQ_PLUGINS_DIR", self.config.pluginsdir))
         self._errors = []
-        self.addDetail('rabbit-errors',
-            Content(UTF8_TEXT, self._get_errors))
+        self.addDetail('rabbit-errors', Content(
+            UTF8_TEXT, self._get_errors))
 
     def _get_errors(self):
         """Yield all errors as UTF-8 encoded text."""

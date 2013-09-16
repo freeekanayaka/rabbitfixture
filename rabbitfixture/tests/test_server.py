@@ -7,7 +7,6 @@ __metaclass__ = type
 
 import os.path
 import socket
-from socket import gethostname
 from textwrap import dedent
 
 from amqplib import client_0_8 as amqp
@@ -15,6 +14,7 @@ from fixtures import EnvironmentVariableFixture
 from rabbitfixture.server import (
     get_nodename_from_status,
     RabbitServer,
+    RabbitServerEnvironment,
     RabbitServerResources,
     )
 from testtools import TestCase
@@ -96,10 +96,29 @@ class TestRabbitServerResources(TestCase):
                 seen_homedirs.add(resources.homedir)
 
     def test_fq_nodename(self):
-        with RabbitServerResources(nodename="nibbles") as resources:
-            self.assertEqual(
-                "nibbles@%s" % gethostname(),
-                resources.fq_nodename)
+        resources = self.useFixture(RabbitServerResources(
+            nodename="nibbles", hostname="127.0.0.1"))
+        self.assertEqual("nibbles@127.0.0.1", resources.fq_nodename)
+
+
+class TestRabbitServerEnvironment(TestCase):
+
+    def test_setup(self):
+        config = self.useFixture(RabbitServerResources(
+            hostname="localhost", port=1234, homedir="rabbit/homedir",
+            mnesiadir="rabbit/mnesiadir", logfile="rabbit/logfile",
+            nodename="rabbit-nodename"))
+        self.useFixture(RabbitServerEnvironment(config))
+        expected = {
+            "RABBITMQ_MNESIA_BASE": config.mnesiadir,
+            "RABBITMQ_LOG_BASE": config.homedir,
+            "RABBITMQ_NODE_IP_ADDRESS": socket.gethostbyname(config.hostname),
+            "RABBITMQ_NODE_PORT": str(config.port),
+            "RABBITMQ_NODENAME": config.fq_nodename,
+            "RABBITMQ_PLUGINS_DIR": config.pluginsdir,
+        }
+        self.assertEqual(
+            expected, {name: os.getenv(name) for name in expected})
 
 
 class TestFunctions(TestCase):
