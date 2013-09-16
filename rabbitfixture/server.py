@@ -131,6 +131,7 @@ class RabbitServerEnvironment(Fixture):
 
     - ``RABBITMQ_MNESIA_BASE``
     - ``RABBITMQ_LOG_BASE``
+    - ``RABBITMQ_NODE_IP_ADDRESS``
     - ``RABBITMQ_NODE_PORT``
     - ``RABBITMQ_NODENAME``
     - ``RABBITMQ_PLUGINS_DIR``
@@ -152,6 +153,9 @@ class RabbitServerEnvironment(Fixture):
             "RABBITMQ_MNESIA_BASE", self.config.mnesiadir))
         self.useFixture(EnvironmentVariableFixture(
             "RABBITMQ_LOG_BASE", self.config.homedir))
+        self.useFixture(EnvironmentVariableFixture(
+            "RABBITMQ_NODE_IP_ADDRESS",
+            socket.gethostbyname(self.config.hostname)))
         self.useFixture(EnvironmentVariableFixture(
             "RABBITMQ_NODE_PORT", str(self.config.port)))
         self.useFixture(EnvironmentVariableFixture(

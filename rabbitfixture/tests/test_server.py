@@ -14,6 +14,7 @@ from fixtures import EnvironmentVariableFixture
 from rabbitfixture.server import (
     get_nodename_from_status,
     RabbitServer,
+    RabbitServerEnvironment,
     RabbitServerResources,
     )
 from testtools import TestCase
@@ -99,6 +100,30 @@ class TestRabbitServerResources(TestCase):
             nodename="nibbles", hostname="biscuit")
         with resources:
             self.assertEqual("nibbles@biscuit", resources.fq_nodename)
+
+
+class TestRabbitServerEnvironment(TestCase):
+
+    def test_defaults(self):
+        config = self.useFixture(RabbitServerResources(
+            hostname="localhost", port=1234, homedir="rabbit/homedir",
+            mnesiadir="rabbit/mnesiadir", logfile="rabbit/logfile",
+            nodename="rabbit-nodename"))
+        with RabbitServerEnvironment(config):
+            expected = {
+                "RABBITMQ_MNESIA_BASE": config.mnesiadir,
+                "RABBITMQ_LOG_BASE": config.homedir,
+                "RABBITMQ_NODE_IP_ADDRESS": (
+                    socket.gethostbyname(config.hostname)),
+                "RABBITMQ_NODE_PORT": str(config.port),
+                "RABBITMQ_NODENAME": config.fq_nodename,
+                "RABBITMQ_PLUGINS_DIR": config.pluginsdir,
+            }
+            self.assertEqual(
+                expected, {
+                    name: os.getenv(name)
+                    for name in expected
+                })
 
 
 class TestFunctions(TestCase):
