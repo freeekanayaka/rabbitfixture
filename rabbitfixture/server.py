@@ -121,10 +121,7 @@ class RabbitServerResources(Fixture):
     @property
     def fq_nodename(self):
         """The node of the RabbitMQ that is being exported."""
-        # Note that socket.gethostname is recommended by the rabbitctl manpage
-        # even though we're always on localhost, its what the erlang cluster
-        # code wants.
-        return "%s@%s" % (self.nodename, socket.gethostname())
+        return "%s@%s" % (self.nodename, self.hostname)
 
 
 class RabbitServerEnvironment(Fixture):

@@ -7,7 +7,6 @@ __metaclass__ = type
 
 import os.path
 import socket
-from socket import gethostname
 from textwrap import dedent
 
 from amqplib import client_0_8 as amqp
@@ -96,10 +95,10 @@ class TestRabbitServerResources(TestCase):
                 seen_homedirs.add(resources.homedir)
 
     def test_fq_nodename(self):
-        with RabbitServerResources(nodename="nibbles") as resources:
-            self.assertEqual(
-                "nibbles@%s" % gethostname(),
-                resources.fq_nodename)
+        resources = RabbitServerResources(
+            nodename="nibbles", hostname="biscuit")
+        with resources:
+            self.assertEqual("nibbles@biscuit", resources.fq_nodename)
 
 
 class TestFunctions(TestCase):
