@@ -41,21 +41,29 @@ def preexec_fn():
     signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
 
-def allocate_ports(n=1):
-    """Allocate `n` unused ports.
+def get_port(socket):
+    """Return the port to which a socket is bound."""
+    addr, port = socket.getsockname()
+    return port
+
+
+def allocate_ports(*addrs):
+    """Allocate `len(addrs)` unused ports.
+
+    A port is allocated for each element in `addrs`.
 
     There is a small race condition here (between the time we allocate the
     port, and the time it actually gets used), but for the purposes for which
     this function gets used it isn't a problem in practice.
     """
-    sockets = map(lambda _: socket.socket(), xrange(n))
+    sockets = [socket.socket() for addr in addrs]
     try:
-        for s in sockets:
-            s.bind(('localhost', 0))
-        return map(lambda s: s.getsockname()[1], sockets)
+        for addr, sock in zip(addrs, sockets):
+            sock.bind((addr, 0))
+        return [get_port(sock) for sock in sockets]
     finally:
-        for s in sockets:
-            s.close()
+        for sock in sockets:
+            sock.close()
 
 
 # Pattern to parse rabbitctl status output to find the nodename of a running
@@ -107,7 +115,7 @@ class RabbitServerResources(Fixture):
         if self.hostname is None:
             self.hostname = 'localhost'
         if self.port is None:
-            [self.port] = allocate_ports(1)
+            [self.port] = allocate_ports(self.hostname)
         if self.homedir is None:
             self.homedir = self.useFixture(TempDir()).path
         if self.mnesiadir is None:

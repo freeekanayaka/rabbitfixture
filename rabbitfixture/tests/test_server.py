@@ -97,9 +97,9 @@ class TestRabbitServerResources(TestCase):
 
     def test_fq_nodename(self):
         resources = RabbitServerResources(
-            nodename="nibbles", hostname="biscuit")
+            nodename="nibbles", hostname="127.0.0.1")
         with resources:
-            self.assertEqual("nibbles@biscuit", resources.fq_nodename)
+            self.assertEqual("nibbles@127.0.0.1", resources.fq_nodename)
 
 
 class TestRabbitServerEnvironment(TestCase):
