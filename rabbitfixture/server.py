@@ -91,18 +91,24 @@ class RabbitServerResources(Fixture):
     :ivar hostname: The host the RabbitMQ is on (always localhost for
         `RabbitServerResources`).
     :ivar port: A port that was free at the time setUp() was called.
+    :ivar dist_port: A port that was free at the time setUp() was
+        called. Used for the `RABBITMQ_DIST_PORT` environment variable,
+        which is related to clustering in RabbitMQ >= 3.3.
     :ivar homedir: A directory to put the RabbitMQ logs in.
     :ivar mnesiadir: A directory for the RabbitMQ db.
     :ivar logfile: The logfile allocated for the server.
     :ivar nodename: The name of the node.
+
     """
 
     def __init__(self, hostname=None, port=None, homedir=None,
-                 mnesiadir=None, logfile=None, nodename=None):
+                 mnesiadir=None, logfile=None, nodename=None,
+                 dist_port=None):
         super(RabbitServerResources, self).__init__()
         self._defaults = dict(
             hostname=hostname,
             port=port,
+            dist_port=dist_port,
             homedir=homedir,
             mnesiadir=mnesiadir,
             logfile=logfile,
@@ -116,6 +122,8 @@ class RabbitServerResources(Fixture):
             self.hostname = 'localhost'
         if self.port is None:
             [self.port] = allocate_ports(self.hostname)
+        if self.dist_port is None:
+            [self.dist_port] = allocate_ports(self.hostname)
         if self.homedir is None:
             self.homedir = self.useFixture(TempDir()).path
         if self.mnesiadir is None:
@@ -141,6 +149,7 @@ class RabbitServerEnvironment(Fixture):
     - ``RABBITMQ_LOG_BASE``
     - ``RABBITMQ_NODE_IP_ADDRESS``
     - ``RABBITMQ_NODE_PORT``
+    - ``RABBITMQ_DIST_PORT``
     - ``RABBITMQ_NODENAME``
     - ``RABBITMQ_PLUGINS_DIR``
 
@@ -166,6 +175,8 @@ class RabbitServerEnvironment(Fixture):
             socket.gethostbyname(self.config.hostname)))
         self.useFixture(EnvironmentVariableFixture(
             "RABBITMQ_NODE_PORT", str(self.config.port)))
+        self.useFixture(EnvironmentVariableFixture(
+            "RABBITMQ_DIST_PORT", str(self.config.dist_port)))
         self.useFixture(EnvironmentVariableFixture(
             "RABBITMQ_NODENAME", self.config.fq_nodename))
         self.useFixture(EnvironmentVariableFixture(
