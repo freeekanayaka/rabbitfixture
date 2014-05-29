@@ -70,6 +70,7 @@ class TestRabbitServerResources(TestCase):
         with RabbitServerResources() as resources:
             self.assertEqual("localhost", resources.hostname)
             self.assertIsInstance(resources.port, int)
+            self.assertIsInstance(resources.dist_port, int)
             self.assertIsInstance(resources.homedir, (str, unicode))
             self.assertIsInstance(resources.mnesiadir, (str, unicode))
             self.assertIsInstance(resources.logfile, (str, unicode))
@@ -77,7 +78,7 @@ class TestRabbitServerResources(TestCase):
 
     def test_passed_to_init(self):
         args = dict(
-            hostname="hostname", port=1234,
+            hostname="hostname", port=1234, dist_port=2345,
             homedir="homedir", mnesiadir="mnesiadir",
             logfile="logfile", nodename="nodename")
         resources = RabbitServerResources(**args)
@@ -114,6 +115,7 @@ class TestRabbitServerEnvironment(TestCase):
             "RABBITMQ_LOG_BASE": config.homedir,
             "RABBITMQ_NODE_IP_ADDRESS": socket.gethostbyname(config.hostname),
             "RABBITMQ_NODE_PORT": str(config.port),
+            "RABBITMQ_DIST_PORT": str(config.dist_port),
             "RABBITMQ_NODENAME": config.fq_nodename,
             "RABBITMQ_PLUGINS_DIR": config.pluginsdir,
         }
