@@ -91,10 +91,14 @@ class RabbitServerResources(Fixture):
     :ivar hostname: The host the RabbitMQ is on (always localhost for
         `RabbitServerResources`).
     :ivar port: A port that was free at the time setUp() was called.
+    :ivar dist_port: A port that was free at the time setUp() was
+        called. Used for the `RABBITMQ_DIST_PORT` environment variable,
+        which is related to clustering in RabbitMQ >= 3.3.
     :ivar homedir: A directory to put the RabbitMQ logs in.
     :ivar mnesiadir: A directory for the RabbitMQ db.
     :ivar logfile: The logfile allocated for the server.
     :ivar nodename: The name of the node.
+
     """
 
     def __init__(self, hostname=None, port=None, homedir=None,
@@ -145,6 +149,7 @@ class RabbitServerEnvironment(Fixture):
     - ``RABBITMQ_LOG_BASE``
     - ``RABBITMQ_NODE_IP_ADDRESS``
     - ``RABBITMQ_NODE_PORT``
+    - ``RABBITMQ_DIST_PORT``
     - ``RABBITMQ_NODENAME``
     - ``RABBITMQ_PLUGINS_DIR``
 
