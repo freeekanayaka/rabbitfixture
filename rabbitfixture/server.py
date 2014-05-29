@@ -98,11 +98,13 @@ class RabbitServerResources(Fixture):
     """
 
     def __init__(self, hostname=None, port=None, homedir=None,
-                 mnesiadir=None, logfile=None, nodename=None):
+                 mnesiadir=None, logfile=None, nodename=None,
+                 dist_port=None):
         super(RabbitServerResources, self).__init__()
         self._defaults = dict(
             hostname=hostname,
             port=port,
+            dist_port=dist_port,
             homedir=homedir,
             mnesiadir=mnesiadir,
             logfile=logfile,
@@ -116,6 +118,8 @@ class RabbitServerResources(Fixture):
             self.hostname = 'localhost'
         if self.port is None:
             [self.port] = allocate_ports(self.hostname)
+        if self.dist_port is None:
+            [self.dist_port] = allocate_ports(self.hostname)
         if self.homedir is None:
             self.homedir = self.useFixture(TempDir()).path
         if self.mnesiadir is None:
@@ -166,6 +170,8 @@ class RabbitServerEnvironment(Fixture):
             socket.gethostbyname(self.config.hostname)))
         self.useFixture(EnvironmentVariableFixture(
             "RABBITMQ_NODE_PORT", str(self.config.port)))
+        self.useFixture(EnvironmentVariableFixture(
+            "RABBITMQ_DIST_PORT", str(self.config.dist_port)))
         self.useFixture(EnvironmentVariableFixture(
             "RABBITMQ_NODENAME", self.config.fq_nodename))
         self.useFixture(EnvironmentVariableFixture(
