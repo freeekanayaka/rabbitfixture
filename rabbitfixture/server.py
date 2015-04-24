@@ -1,4 +1,4 @@
-# Copyright 2011 Canonical Ltd.  This software is licensed under the
+# Copyright 2011-2015 Canonical Ltd.  This software is licensed under the
 # GNU Affero General Public License version 3 (see the file LICENSE).
 
 """Test server fixtures for RabbitMQ."""
@@ -14,7 +14,10 @@ import os
 import re
 import signal
 import socket
-import subprocess
+try:
+    import subprocess32 as subprocess
+except ImportError:
+    import subprocess
 import time
 
 from amqplib import client_0_8 as amqp
@@ -194,18 +197,31 @@ class RabbitServerEnvironment(Fixture):
                 yield error
             yield '\n'
 
-    def rabbitctl(self, command, strip=False):
+    @property
+    def ctlbin(self):
+        return os.path.join(RABBITBIN, "rabbitmqctl")
+
+    @property
+    def ctltimeout(self):
+        return 15
+
+    def rabbitctl(self, command, strip=False, timeout=None):
         """Executes a ``rabbitctl`` command and returns status."""
-        ctlbin = os.path.join(RABBITBIN, "rabbitmqctl")
+        if timeout is None:
+            timeout = self.ctltimeout
         nodename = self.config.fq_nodename
         env = dict(os.environ, HOME=self.config.homedir)
         if isinstance(command, str):
             command = (command,)
         ctl = subprocess.Popen(
-            (ctlbin, "-n", nodename) + command, env=env,
+            (self.ctlbin, "-n", nodename) + command, env=env,
             stdout=subprocess.PIPE, stderr=subprocess.PIPE,
             preexec_fn=preexec_fn)
-        outstr, errstr = ctl.communicate()
+        try:
+            outstr, errstr = ctl.communicate(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            ctl.kill()
+            raise
         if strip:
             return outstr.strip(), errstr.strip()
         return outstr, errstr
@@ -213,7 +229,10 @@ class RabbitServerEnvironment(Fixture):
     def is_node_running(self):
         """Checks that our RabbitMQ node is up and running."""
         nodename = self.config.fq_nodename
-        outdata, errdata = self.rabbitctl("status")
+        try:
+            outdata, errdata = self.rabbitctl("status")
+        except subprocess.TimeoutExpired:
+            return False
         if errdata:
             self._errors.append(errdata)
         if not outdata:
@@ -336,16 +355,21 @@ class RabbitServerRunner(Fixture):
 
     def _stop(self):
         """Stop the running server. Normally called by cleanups."""
-        self._request_stop()
-        # Wait for the node to go down...
-        timeout = time.time() + 15
-        while time.time() < timeout:
-            if not self.environment.is_node_running():
-                break
-            time.sleep(0.3)
-        else:
-            raise Exception(
-                "Timeout waiting for RabbitMQ node to go down.")
+        try:
+            self._request_stop()
+            # Wait for the node to go down...
+            timeout = time.time() + 15
+            while time.time() < timeout:
+                if not self.environment.is_node_running():
+                    break
+                time.sleep(0.3)
+            else:
+                raise Exception(
+                    "Timeout waiting for RabbitMQ node to go down.")
+        except subprocess.TimeoutExpired:
+            # Go straight to killing the process directly.
+            timeout = time.time()
+
         # Wait at least 5 more seconds for the process to end...
         timeout = max(timeout, time.time() + 5)
         while time.time() < timeout:
