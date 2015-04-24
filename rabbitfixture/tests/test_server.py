@@ -7,10 +7,15 @@ __metaclass__ = type
 
 import os.path
 import socket
+import stat
 from textwrap import dedent
 
 from amqplib import client_0_8 as amqp
-from fixtures import EnvironmentVariableFixture
+from fixtures import (
+    EnvironmentVariableFixture,
+    MonkeyPatch,
+    TempDir,
+    )
 from rabbitfixture.server import (
     get_nodename_from_status,
     RabbitServer,
@@ -45,6 +50,40 @@ class TestRabbitFixture(TestCase):
                 log = fixture.runner.getDetails()["server.log"]
                 # Which shouldn't blow up on iteration.
                 list(log.iter_text())
+            except Exception:
+                # self.useFixture() is not being used because we want to
+                # handle the fixture's lifecycle, so we must also be
+                # responsible for propagating fixture details.
+                gather_details(fixture.getDetails(), self.getDetails())
+                raise
+
+        # The daemon should be closed now.
+        self.assertRaises(socket.error, amqp.Connection, **connect_arguments)
+
+    def test_stop_hang(self):
+        # If rabbitctl hangs on shutdown, the fixture eventually manages to
+        # stop RabbitMQ anyway.
+        bindir = self.useFixture(TempDir()).path
+        fakectlbin = os.path.join(bindir, "rabbitmqctl")
+        with open(fakectlbin, "w") as f:
+            f.write("#! /bin/sh\n")
+            f.write("while :; do sleep 1 || exit; done\n")
+        os.chmod(fakectlbin, stat.S_IRWXU)
+
+        with RabbitServer() as fixture:
+            try:
+                connect_arguments = {
+                    "host": 'localhost:%s' % fixture.config.port,
+                    "userid": "guest", "password": "guest",
+                    "virtual_host": "/", "insist": False,
+                    }
+
+                self.useFixture(MonkeyPatch(
+                    "rabbitfixture.server.RabbitServerEnvironment.ctlbin",
+                    fakectlbin))
+                self.useFixture(MonkeyPatch(
+                    "rabbitfixture.server.RabbitServerEnvironment.ctltimeout",
+                    0.1))
             except Exception:
                 # self.useFixture() is not being used because we want to
                 # handle the fixture's lifecycle, so we must also be
