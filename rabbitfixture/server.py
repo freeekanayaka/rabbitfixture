@@ -42,6 +42,9 @@ def preexec_fn():
     # Revert Python's handling of SIGPIPE. See
     # http://bugs.python.org/issue1652 for more info.
     signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+    # This will create a new process group, so we can send signals to both
+    # rabbitmq and its child processes.
+    os.setsid()
 
 
 def get_port(socket):
@@ -375,12 +378,16 @@ class RabbitServerRunner(Fixture):
         while time.time() < timeout:
             if not self.is_running():
                 break
-            self.process.terminate()
+            # Terminate the entire process group, since rabbitmq also spawns an
+            # Erlang runtime sub-process, which is actually what does all the
+            # work and listens for connections.
+            os.killpg(os.getpgid(self.process.pid), signal.SIGTERM)
             time.sleep(0.1)
         else:
             # Die!!!
             if self.is_running():
-                self.process.kill()
+                # Kill the process group, see above.
+                os.killpg(os.getpgid(self.process.pid), signal.SIGKILL)
                 time.sleep(0.5)
             if self.is_running():
                 raise Exception("RabbitMQ server just won't die.")
