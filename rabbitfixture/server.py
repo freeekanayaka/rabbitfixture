@@ -42,7 +42,7 @@ def preexec_fn():
     # Revert Python's handling of SIGPIPE. See
     # http://bugs.python.org/issue1652 for more info.
     signal.signal(signal.SIGPIPE, signal.SIG_DFL)
-    # This will create a new process group, so we can send signals to both
+    # Create a new process group, so we can send signals to both
     # rabbitmq and its child processes.
     os.setsid()
 
