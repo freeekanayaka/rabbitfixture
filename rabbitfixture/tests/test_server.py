@@ -102,6 +102,14 @@ class TestRabbitFixture(TestCase):
         self.assertIs(config, fixture.runner.config)
         self.assertIs(config, fixture.runner.environment.config)
 
+    def test_kill(self):
+        # The fixture can kill RabbitMQ even before cleanUp time, if requested.
+        with RabbitServer() as fixture:
+            fixture.runner.kill()
+            # The daemon should be died, even if we didn't run
+            # cleanUp yet.
+            self.assertFalse(fixture.runner.is_running())
+
 
 class TestRabbitServerResources(TestCase):
 

@@ -17,7 +17,7 @@ if sys.version_info[0] < 3:
 
 setup(
     name='rabbitfixture',
-    version="0.3.6",
+    version="0.3.7",
     packages=find_packages('.'),
     package_dir={'': '.'},
     include_package_data=True,

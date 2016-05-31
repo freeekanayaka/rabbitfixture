@@ -42,6 +42,9 @@ def preexec_fn():
     # Revert Python's handling of SIGPIPE. See
     # http://bugs.python.org/issue1652 for more info.
     signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+    # Create a new process group, so we can send signals to both
+    # rabbitmq and its child processes.
+    os.setsid()
 
 
 def get_port(socket):
@@ -292,6 +295,21 @@ class RabbitServerRunner(Fixture):
         else:
             raise Exception("RabbitMQ server is not running.")
 
+    def kill(self):
+        """Kill the RabbitMQ server process.
+
+        This will send a SIGKILL to the server process and its children, it is
+        used as last resort if both 'rabbitmqctl stop' and sending SIGTERM
+        haven't managed to shutdown RabbitMQ.
+
+        It is also useful to test your code against scenarios where the server
+        dies.
+        """
+        self._signal(signal.SIGKILL)
+        time.sleep(0.5)
+        if self.is_running():
+            raise Exception("RabbitMQ server just won't die.")
+
     def _spawn(self):
         """Spawn the RabbitMQ server process."""
         cmd = os.path.join(RABBITBIN, 'rabbitmq-server')
@@ -375,15 +393,20 @@ class RabbitServerRunner(Fixture):
         while time.time() < timeout:
             if not self.is_running():
                 break
-            self.process.terminate()
+            self._signal(signal.SIGTERM)
             time.sleep(0.1)
         else:
             # Die!!!
             if self.is_running():
-                self.process.kill()
-                time.sleep(0.5)
-            if self.is_running():
-                raise Exception("RabbitMQ server just won't die.")
+                self.kill()
+
+    def _signal(self, code):
+        """Send a signal to the server process and all its children."""
+        # We need to send the signal to the process group, since on Ubuntu
+        # 14.04 an later /usr/sbin/rabbitmq-server is a shell script wrapper
+        # that spawns the actual Erlang runtime sub-process which what does
+        # actually do the work and listen for connections.
+        os.killpg(os.getpgid(self.process.pid), code)
 
 
 class RabbitServer(Fixture):
